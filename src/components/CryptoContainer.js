@@ -1,91 +1,65 @@
 import React, {Component} from 'react'
 import {connect} from 'react-redux'
-import {View, Text, StyleSheet, Image} from 'react-native'
+import {View, Text, StyleSheet, ScrollView} from 'react-native'
 import Spinner from 'react-native-loading-spinner-overlay'
+import FetchCoinData from './../Actions/FetchCoinData'
+import CoinCard from './CoinCard'
 
-const styles = StyleSheet.create({
-    container: {
-        display: 'flex',
-        marginBottom: 20,
-        borderBottomColor: '#e5e5e5',
-        borderBottomWidth: 3,
-        padding: 20
-    },
-    upperRow: {
-        display: 'flex',
-        flexDirection: 'row',
-        marginBottom: 15
-    },
-    coinSymbol: {
-        marginTop: 10,
-        marginLeft: 20,
-        marginRight: 5,
-        fontWeight: 'bold'
-    },
-    coinName: {
-        marginTop: 10,
-        marginLeft: 20,
-        marginRight: 5,
-        fontWeight: 'bold'
-    },
-    seperator: {
-        marginTop: 10
-    },
-    coinPrice: {
-        marginTop: 10,
-        marginLeft: 'auto',
-        marginRight: 10,
-        fontWeight: 'bold'
-    },
-    image: {
-        width: 35,
-        height: 35
-    },
-    moneySymbol: {
-        fontWeight: 'bold'
-    },
-    statisticsContainer: {
-        display: 'flex',
-        borderTopColor: '#fafafa',
-        borderTopWidth: 2,
-        padding: 10,
-        flexDirection: 'row',
-        justifyContent: 'space-around'
-    },
-    percentChangePlus: {
-        color: '#00bfa5',
-        fontWeight: 'bold',
-        marginLeft: 5
-    },
-    percentChangeMinus: {
-        color: '#dd2c00',
-        fontWeight: 'bold',
-        marginLeft: 5
+class CryptoContainer extends Component {
+    componentDidMount() {
+        this.props.FetchCoinData()
     }
-})
 
-const CoinCard = ({symbol, coinName, priceUSD, percentChange24hr, percentChange7d}) => {
-    return (
-        <View style={styles.container}>
-            <View style={styles.upperRow}>
-                <Image style={styles.image} source={{ uri: images[symbol]}}/>
-                <Text style={styles.coinSymbol}>{symbol}</Text>
-                <Text style={styles.seperator}>|</Text>
-                <Text style={styles.coinName}>{coinName}</Text>
-                <Text style={styles.coinPrice}>{priceUSD} <Text style={styles.moneySymbol}> $ </Text></Text>
-            </View>
+    renderCoinCards() {
+        const {crypto} = this.props
+        return crypto.data.map((coin) =>
+            <CoinCard
+                key={coin.name}
+                coinName={coin.name}
+                symbol={coin.symbol}
+                priceUSD={coin.priceUSD}
+                percentChange24hr={coin.percentChange24hr}
+                percentChange7d={coin.percentChange7d}
+            />
+        )
+    }
 
-            <View style={styles.statisticsContainer}>
-                <Text>24Hr:
-                    <Text style={percentChange24hr < 0 ? percentChangeMinus : percentChangePlus}> {percentChange24hr} %</Text>
-                </Text>
+    render() {
+        const {crypto} = this.props
+        const {contentContainer} = styles
 
-                <Text>7D:
-                    <Text style={percentChange7d < 0 ? percentChangeMinus : percentChangePlus}> {percentChange7d} %</Text>
-                </Text>
-            </View>
-        </View>
-    )
+        if (crypto.isFetching) {
+            return(
+                <View>
+                    <Spinner
+                        visible={crypto.isFetching}
+                        textContent={'Loading...'}
+                        textStyle={{color: "#253145"}}
+                        animation='fade'
+                    />
+                </View>
+            )
+        } else {
+            return(
+                <ScrollView contentContainerStyle={contentContainer}>
+                    {this.renderCoinCards()}
+                </ScrollView>
+            )
+        }
+    }
 }
 
-export default CoinCard
+const styles = StyleSheet.create({
+    contentContainer: {
+        paddingBottom: 100,
+        paddingTop: 55
+    },
+})
+
+function mapStateToProps(state) {
+    return {
+        crypto: state.crypto
+    }
+}
+
+export default connect(mapStateToProps, {FetchCoinData})(CryptoContainer)
